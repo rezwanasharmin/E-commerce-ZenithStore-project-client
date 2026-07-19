@@ -23,17 +23,20 @@ export const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [googleClientId, setGoogleClientId] = useState<string | null>(null);
+  const DEFAULT_GOOGLE_CLIENT_ID = '553480784453-4gekce6hv2ps0lu4usl77fcpj4bpj0ct.apps.googleusercontent.com';
+  const [googleClientId, setGoogleClientId] = useState<string>(DEFAULT_GOOGLE_CLIENT_ID);
 
   useEffect(() => {
     const fetchGoogleClientId = async () => {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       try {
-        const response = await axios.get('http://localhost:5000/api/auth/google-client-id');
+        const response = await axios.get(`${apiBase}/api/auth/google-client-id`);
         if (response.data.clientId) {
           setGoogleClientId(response.data.clientId);
         }
       } catch (err) {
-        console.warn('Failed to fetch Google Client ID from backend.');
+        console.warn('Backend client ID fetch fallback to default Google Client ID.');
+        setGoogleClientId(DEFAULT_GOOGLE_CLIENT_ID);
       }
     };
     fetchGoogleClientId();
