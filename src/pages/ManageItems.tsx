@@ -220,6 +220,9 @@ export const ManageItems: React.FC = () => {
                           <img
                             src={product.image}
                             alt={product.title}
+                            onError={(e) => {
+                              e.currentTarget.src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80';
+                            }}
                             className="h-10 w-10 rounded-xl object-contain bg-white p-1 border border-slate-200 dark:border-slate-700 shrink-0"
                           />
                           <div className="max-w-xs sm:max-w-md">

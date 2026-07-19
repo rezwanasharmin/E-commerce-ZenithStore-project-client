@@ -73,6 +73,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }
         <img
           src={product.image}
           alt={product.title}
+          onError={(e) => {
+            e.currentTarget.src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80';
+          }}
           className="max-h-full max-w-full object-contain transition-transform duration-500 group-hover:scale-110"
           loading="lazy"
         />

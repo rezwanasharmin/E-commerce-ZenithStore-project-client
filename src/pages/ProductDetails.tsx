@@ -181,6 +181,9 @@ export const ProductDetails: React.FC = () => {
                   transition={{ duration: 0.3 }}
                   src={mediaGallery[activeImageIndex].url}
                   alt={product.title}
+                  onError={(e: any) => {
+                    e.currentTarget.src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80';
+                  }}
                   className="max-h-full max-w-full object-contain transition-transform duration-300 hover:scale-105"
                 />
               </div>
@@ -197,7 +200,14 @@ export const ProductDetails: React.FC = () => {
                         : 'border-slate-200 dark:border-slate-800 opacity-60 hover:opacity-100'
                     }`}
                   >
-                    <img src={media.url} alt={media.label} className="max-h-full max-w-full object-contain" />
+                    <img 
+                      src={media.url} 
+                      alt={media.label} 
+                      onError={(e: any) => {
+                        e.currentTarget.src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80';
+                      }}
+                      className="max-h-full max-w-full object-contain" 
+                    />
                   </button>
                 ))}
               </div>
