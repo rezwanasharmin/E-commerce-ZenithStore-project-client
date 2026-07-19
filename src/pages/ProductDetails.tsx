@@ -25,18 +25,50 @@ export const ProductDetails: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await axios.get<Product>(`https://fakestoreapi.com/products/${id}`);
-        if (!response.data) {
-          throw new Error('Product not found.');
-        }
-        setProduct(response.data);
+        let foundProduct: Product | null = null;
 
-        // Fetch related products from same category
-        const allRes = await axios.get<Product[]>('https://fakestoreapi.com/products');
-        const related = allRes.data
-          .filter((item) => item.category === response.data.category && item.id !== response.data.id)
-          .slice(0, 4);
-        setRelatedProducts(related);
+        // 1. Check custom user-created products in localStorage
+        try {
+          const customRaw = localStorage.getItem('custom_products');
+          if (customRaw) {
+            const parsedCustom: Product[] = JSON.parse(customRaw);
+            const customMatch = parsedCustom.find((p) => String(p.id) === String(id));
+            if (customMatch) {
+              foundProduct = customMatch;
+            }
+          }
+        } catch (e) {
+          console.warn('Error reading custom_products:', e);
+        }
+
+        // 2. If not custom, fetch from FakeStoreAPI / Backend API
+        if (!foundProduct) {
+          try {
+            const response = await axios.get<Product>(`https://fakestoreapi.com/products/${id}`);
+            if (response.data && response.data.id) {
+              foundProduct = response.data;
+            }
+          } catch (e) {
+            console.warn('FakeStoreAPI fetch failed for id:', id);
+          }
+        }
+
+        if (!foundProduct) {
+          throw new Error('Product not found in catalog.');
+        }
+
+        setProduct(foundProduct);
+
+        // Fetch related products
+        try {
+          const allRes = await axios.get<Product[]>('https://fakestoreapi.com/products');
+          const related = allRes.data
+            .filter((item) => item.category === foundProduct?.category && String(item.id) !== String(foundProduct?.id))
+            .slice(0, 4);
+          setRelatedProducts(related);
+        } catch (e) {
+          console.warn('Failed to load related products');
+        }
       } catch (err) {
         console.error('Error fetching product details:', err);
         setError('Unable to load product details. It may not exist or there is a network issue.');
