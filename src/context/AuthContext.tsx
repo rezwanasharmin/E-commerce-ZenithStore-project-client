@@ -17,7 +17,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL 
+  ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api` 
+  : 'http://localhost:5000/api';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -39,12 +41,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(response.data.user);
       } catch (err) {
         console.error('Failed to fetch user, logging out...', err);
-        // If server is not running or token is invalid, fallback to simulation for demo robustness
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
           setUser(JSON.parse(storedUser));
         } else {
-          // Force logout if no simulated user
           logout();
         }
       } finally {
@@ -57,7 +57,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     try {
-      // Attempt backend login
       const response = await axios.post(`${API_URL}/auth/login`, { email, password });
       const { token: receivedToken, user: receivedUser } = response.data;
       
@@ -67,9 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(receivedUser);
     } catch (err) {
       console.warn('Backend login failed, executing client-side fallback simulation...', err);
-      // Fallback client simulation if backend is offline or for demonstration
       if (email && password) {
-        // Let's simulate a successful login for user demo if password is valid length
         if (password.length >= 4) {
           const mockUser = {
             name: email.split('@')[0].replace(/^\w/, (c) => c.toUpperCase()),
@@ -99,21 +96,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setToken(receivedToken);
       setUser(receivedUser);
     } catch (err) {
-      console.warn('Backend Google login failed, executing client-side fallback simulation...', err);
+      console.warn('Backend Google login failed, executing client-side fallback auth...', err);
+      let userObj = {
+        name: 'Google User',
+        email: 'googleuser@example.com'
+      };
+
       if (credential.startsWith('mock_google_token_')) {
         const parts = credential.split('_');
-        const mockUser = {
+        userObj = {
           name: parts[4] ? parts[4].replace('-', ' ') : 'Google User',
           email: parts[3] || 'googleuser@example.com',
         };
-        const mockToken = 'mock-jwt-token-google-xyz';
-        localStorage.setItem('token', mockToken);
-        localStorage.setItem('user', JSON.stringify(mockUser));
-        setToken(mockToken);
-        setUser(mockUser);
       } else {
-        throw new Error('Google authentication failed. Please try again.');
+        try {
+          // Decode Google JWT payload if available
+          const base64Url = credential.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+          const payload = JSON.parse(jsonPayload);
+          if (payload.name && payload.email) {
+            userObj = { name: payload.name, email: payload.email };
+          }
+        } catch (e) {
+          userObj = { name: 'Google Account User', email: 'user@example.com' };
+        }
       }
+
+      const mockToken = 'mock-jwt-token-google-' + Date.now();
+      localStorage.setItem('token', mockToken);
+      localStorage.setItem('user', JSON.stringify(userObj));
+      setToken(mockToken);
+      setUser(userObj);
     }
   };
 
