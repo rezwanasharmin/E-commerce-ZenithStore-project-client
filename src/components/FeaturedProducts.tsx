@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
 import { ProductCard } from './ProductCard';
 import type { Product } from './ProductCard';
 import { QuickViewModal } from './QuickViewModal';
+import { productService } from '../services/productService';
 import { AlertCircle, RotateCcw, Search, SlidersHorizontal, Sparkles, X, ChevronLeft, ChevronRight, DollarSign, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -26,50 +26,11 @@ export const FeaturedProducts: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      let combinedProducts: Product[] = [];
-
-      // 1. Read custom products
-      try {
-        const customRaw = localStorage.getItem('custom_products');
-        if (customRaw) {
-          const parsed = JSON.parse(customRaw);
-          if (Array.isArray(parsed)) {
-            combinedProducts = [...parsed];
-          }
-        }
-      } catch (e) {
-        console.error('Error reading custom products:', e);
-      }
-
-      // 2. Fetch API products
-      try {
-        const response = await axios.get<Product[]>('https://fakestoreapi.com/products');
-        if (Array.isArray(response.data)) {
-          response.data.forEach((apiProd) => {
-            if (!combinedProducts.some((p) => p.id === apiProd.id)) {
-              combinedProducts.push(apiProd);
-            }
-          });
-        }
-      } catch (err) {
-        console.warn('API error, relying on local custom items:', err);
-      }
-
-      // 3. Filter out deleted products
-      try {
-        const deletedRaw = localStorage.getItem('deleted_product_ids');
-        if (deletedRaw) {
-          const deletedIds: (string | number)[] = JSON.parse(deletedRaw);
-          combinedProducts = combinedProducts.filter((p) => !deletedIds.includes(p.id));
-        }
-      } catch (e) {
-        console.error('Error reading deleted products:', e);
-      }
-
-      setProducts(combinedProducts);
+      const allProducts = await productService.getAllProducts();
+      setProducts(allProducts);
     } catch (err) {
       console.error('Error loading products:', err);
-      setError('Could not fetch products. Please check your internet connection and try again.');
+      setError('Could not fetch products. Please try again.');
     } finally {
       setLoading(false);
     }

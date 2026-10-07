@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, MapPin, Send, MessageSquare, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
-import axios from 'axios';
+import { api } from '../services/api';
 
 export const Contact: React.FC = () => {
   const [name, setName] = useState('');
@@ -24,7 +24,7 @@ export const Contact: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      await axios.post('http://localhost:5000/api/contact', {
+      await api.post('/contact', {
         name: name.trim(),
         email: email.trim(),
         subject: subject.trim() || 'General Inquiry',

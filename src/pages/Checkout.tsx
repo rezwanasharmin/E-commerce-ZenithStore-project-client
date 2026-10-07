@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { ShoppingBag, ArrowLeft, ArrowRight, ShieldCheck, CheckCircle, Truck, CreditCard, User, Phone, MapPin, AlertCircle } from 'lucide-react';
-import axios from 'axios';
+import { api } from '../services/api';
 import { motion } from 'framer-motion';
 
 export const Checkout: React.FC = () => {
@@ -101,7 +101,7 @@ export const Checkout: React.FC = () => {
 
     try {
       // Post order to backend API
-      await axios.post('http://localhost:5000/api/orders', orderData);
+      await api.post('/orders', orderData);
     } catch (err) {
       console.warn('Backend server order save offline, persisting order to localStorage.', err);
     }

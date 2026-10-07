@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
 import type { Product } from '../components/ProductCard';
 import { useCart } from '../context/CartContext';
+import { productService } from '../services/productService';
 import { Star, ArrowLeft, ShieldAlert, Sparkles, Check, ThumbsUp, ShoppingCart, Info, Award, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -25,53 +25,24 @@ export const ProductDetails: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        let foundProduct: Product | null = null;
+        if (!id) throw new Error('Invalid product ID');
 
-        // 1. Check custom user-created products in localStorage
-        try {
-          const customRaw = localStorage.getItem('custom_products');
-          if (customRaw) {
-            const parsedCustom: Product[] = JSON.parse(customRaw);
-            const customMatch = parsedCustom.find((p) => String(p.id) === String(id));
-            if (customMatch) {
-              foundProduct = customMatch;
-            }
-          }
-        } catch (e) {
-          console.warn('Error reading custom_products:', e);
-        }
-
-        // 2. If not custom, fetch from FakeStoreAPI / Backend API
-        if (!foundProduct) {
-          try {
-            const response = await axios.get<Product>(`https://fakestoreapi.com/products/${id}`);
-            if (response.data && response.data.id) {
-              foundProduct = response.data;
-            }
-          } catch (e) {
-            console.warn('FakeStoreAPI fetch failed for id:', id);
-          }
-        }
-
-        if (!foundProduct) {
-          throw new Error('Product not found in catalog.');
-        }
-
+        const foundProduct = await productService.getProductById(id);
         setProduct(foundProduct);
 
         // Fetch related products
         try {
-          const allRes = await axios.get<Product[]>('https://fakestoreapi.com/products');
-          const related = allRes.data
+          const allProds = await productService.getAllProducts();
+          const related = allProds
             .filter((item) => item.category === foundProduct?.category && String(item.id) !== String(foundProduct?.id))
             .slice(0, 4);
           setRelatedProducts(related);
         } catch (e) {
-          console.warn('Failed to load related products');
+          console.warn('Failed to load related products', e);
         }
       } catch (err) {
         console.error('Error fetching product details:', err);
-        setError('Unable to load product details. It may not exist or there is a network issue.');
+        setError('Unable to load product details. It may not exist or has been removed.');
       } finally {
         setLoading(false);
       }

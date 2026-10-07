@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { KeyRound, Mail, AlertCircle, ShoppingBag, User as UserIcon, Sparkles } from 'lucide-react';
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
-import axios from 'axios';
+import { api } from '../services/api';
 import { motion } from 'framer-motion';
 
 export const Login: React.FC = () => {
@@ -28,14 +28,12 @@ export const Login: React.FC = () => {
 
   useEffect(() => {
     const fetchGoogleClientId = async () => {
-      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       try {
-        const response = await axios.get(`${apiBase}/api/auth/google-client-id`);
+        const response = await api.get('/auth/google-client-id');
         if (response.data.clientId) {
           setGoogleClientId(response.data.clientId);
         }
       } catch (err) {
-        console.warn('Backend client ID fetch fallback to default Google Client ID.');
         setGoogleClientId(DEFAULT_GOOGLE_CLIENT_ID);
       }
     };

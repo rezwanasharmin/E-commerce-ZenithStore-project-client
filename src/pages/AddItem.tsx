@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { PlusCircle, Image as ImageIcon, Tag, DollarSign, Calendar, AlertCircle, ArrowLeft, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
-import axios from 'axios';
+import { productService } from '../services/productService';
 
 export const AddItem: React.FC = () => {
   const navigate = useNavigate();
@@ -39,10 +39,10 @@ export const AddItem: React.FC = () => {
     setIsSubmitting(true);
 
     const defaultImages: { [key: string]: string } = {
-      electronics: 'https://fakestoreapi.com/img/81QpkIctqPL._AC_SX679_.jpg',
-      jewelery: 'https://fakestoreapi.com/img/71YAIFU48IL._AC_UL640_QL65_ML3_.jpg',
-      "men's clothing": 'https://fakestoreapi.com/img/71z3kpMAYsL._AC_UY879_.jpg',
-      "women's clothing": 'https://fakestoreapi.com/img/51Y5NI-I5jL._AC_UX679_.jpg',
+      electronics: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80',
+      jewelery: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=600&auto=format&fit=crop&q=80',
+      "men's clothing": 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80',
+      "women's clothing": 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&auto=format&fit=crop&q=80',
     };
 
     const finalImage = imageUrl.trim() || defaultImages[category] || defaultImages.electronics;
@@ -64,20 +64,10 @@ export const AddItem: React.FC = () => {
       date
     };
 
-    // 1. Post to backend API
     try {
-      await axios.post('http://localhost:5000/api/products', newProduct);
+      await productService.createProduct(newProduct);
     } catch (err) {
-      console.warn('Backend server offline, saving product to localStorage', err);
-    }
-
-    // 2. Save product locally to localStorage so Manage Items & Explore page pick it up instantly
-    try {
-      const existingRaw = localStorage.getItem('custom_products');
-      const existing = existingRaw ? JSON.parse(existingRaw) : [];
-      localStorage.setItem('custom_products', JSON.stringify([newProduct, ...existing]));
-    } catch (e) {
-      console.error('Failed to save product to localStorage:', e);
+      console.error('Failed to create product:', err);
     }
 
     setIsSubmitting(false);

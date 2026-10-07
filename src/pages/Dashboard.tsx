@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { Package, Heart, ShoppingCart, LogOut, ArrowRight, UserCheck, Calendar, TrendingUp, PieChart as PieIcon } from 'lucide-react';
-import axios from 'axios';
+import { api } from '../services/api';
 import { motion } from 'framer-motion';
 import {
   ResponsiveContainer,
@@ -81,7 +81,7 @@ export const Dashboard: React.FC = () => {
 
       // Fetch backend API orders
       try {
-        const response = await axios.get('http://localhost:5000/api/orders');
+        const response = await api.get('/orders');
         if (Array.isArray(response.data)) {
           const mappedApi = response.data.map((order: any) => ({
             id: order.orderId,

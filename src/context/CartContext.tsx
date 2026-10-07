@@ -38,7 +38,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: 1,
           title: 'Fjallraven - Foldsack No. 1 Backpack, Fits 15 Laptops',
           price: 109.95,
-          image: 'https://fakestoreapi.com/img/81fPKd-2AYL._AC_SL1500_.jpg',
+          image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&auto=format&fit=crop&q=80',
           category: "men's clothing",
           quantity: 1,
           selectedColor: 'Midnight Black',

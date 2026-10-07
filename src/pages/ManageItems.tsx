@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
 import type { Product } from '../components/ProductCard';
 import { useCart } from '../context/CartContext';
+import { productService } from '../services/productService';
 import { Eye, Trash2, Search, ArrowLeft, ShieldCheck, AlertCircle, RefreshCw, Star, Tag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -20,47 +20,8 @@ export const ManageItems: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      let combinedProducts: Product[] = [];
-
-      // 1. Read custom products added by user in current/past sessions
-      try {
-        const customRaw = localStorage.getItem('custom_products');
-        if (customRaw) {
-          const parsedCustom = JSON.parse(customRaw);
-          if (Array.isArray(parsedCustom)) {
-            combinedProducts = [...parsedCustom];
-          }
-        }
-      } catch (e) {
-        console.error('Error reading custom products:', e);
-      }
-
-      // 2. Fetch API products
-      try {
-        const response = await axios.get<Product[]>('https://fakestoreapi.com/products');
-        if (Array.isArray(response.data)) {
-          response.data.forEach((apiProd) => {
-            if (!combinedProducts.some((p) => p.id === apiProd.id)) {
-              combinedProducts.push(apiProd);
-            }
-          });
-        }
-      } catch (err) {
-        console.warn('Fakestore API offline, relying on custom inventory:', err);
-      }
-
-      // 3. Filter out deleted products
-      try {
-        const deletedRaw = localStorage.getItem('deleted_product_ids');
-        if (deletedRaw) {
-          const deletedIds: (string | number)[] = JSON.parse(deletedRaw);
-          combinedProducts = combinedProducts.filter((p) => !deletedIds.includes(p.id));
-        }
-      } catch (e) {
-        console.error('Error reading deleted product IDs:', e);
-      }
-
-      setProducts(combinedProducts);
+      const allProds = await productService.getAllProducts();
+      setProducts(allProds);
     } catch (err) {
       console.error('Error fetching inventory items:', err);
       setError('Failed to load inventory list. Please try again.');
@@ -73,36 +34,16 @@ export const ManageItems: React.FC = () => {
     fetchProducts();
   }, []);
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (!deleteModalProduct) return;
 
     const targetId = deleteModalProduct.id;
 
-    // 1. Remove from state
+    // 1. Remove from local component state
     setProducts((prev) => prev.filter((p) => p.id !== targetId));
 
-    // 2. Remove from custom_products localStorage if custom
-    try {
-      const customRaw = localStorage.getItem('custom_products');
-      if (customRaw) {
-        const parsedCustom: Product[] = JSON.parse(customRaw);
-        const updatedCustom = parsedCustom.filter((p) => p.id !== targetId);
-        localStorage.setItem('custom_products', JSON.stringify(updatedCustom));
-      }
-    } catch (e) {
-      console.error('Failed removing item from custom_products:', e);
-    }
-
-    // 3. Persist deleted ID in deleted_product_ids
-    try {
-      const deletedRaw = localStorage.getItem('deleted_product_ids');
-      const deletedIds: (string | number)[] = deletedRaw ? JSON.parse(deletedRaw) : [];
-      if (!deletedIds.includes(targetId)) {
-        localStorage.setItem('deleted_product_ids', JSON.stringify([...deletedIds, targetId]));
-      }
-    } catch (e) {
-      console.error('Failed storing deleted_product_ids:', e);
-    }
+    // 2. Delegate persistence to productService
+    await productService.deleteProduct(targetId);
 
     showToast(`Product "${deleteModalProduct.title}" deleted from catalog.`);
     setDeleteModalProduct(null);
